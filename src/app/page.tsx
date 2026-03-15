@@ -494,11 +494,32 @@ function FAQ() {
 function WaitlistSection() {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email) {
-      setSubmitted(true);
+    if (!email) return;
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      if (res.ok) {
+        setSubmitted(true);
+      } else {
+        setError("Something went wrong. Try again.");
+      }
+    } catch {
+      setError("Network error. Try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -532,11 +553,16 @@ function WaitlistSection() {
             />
             <button
               type="submit"
-              className="h-12 rounded-lg bg-accent px-8 text-sm font-medium text-black transition-all duration-200 hover:bg-accent-hover hover:shadow-[0_0_20px_rgba(34,211,238,0.15)]"
+              disabled={loading}
+              className="h-12 rounded-lg bg-accent px-8 text-sm font-medium text-black transition-all duration-200 hover:bg-accent-hover hover:shadow-[0_0_20px_rgba(34,211,238,0.15)] disabled:opacity-50"
             >
-              Get Early Access
+              {loading ? "Subscribing..." : "Get Early Access"}
             </button>
           </form>
+        )}
+
+        {error && (
+          <p className="mt-3 text-sm text-error">{error}</p>
         )}
 
         <p className="mt-4 text-xs text-text-muted">
